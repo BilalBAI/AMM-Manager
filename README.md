@@ -24,7 +24,14 @@ pip install web3
 
 ## Configuration
 
-Edit `config.json` with your settings:
+**Important**: `config.json` contains placeholders. You must update it with your own values before running the script.
+
+1. Copy the example config (or edit `config.json` directly):
+   ```bash
+   cp config.example.json config.json
+   ```
+
+2. Edit `config.json` with your settings:
 
 ```json
 {
@@ -39,10 +46,16 @@ Edit `config.json` with your settings:
 1. **RPC URL**: Your Ethereum RPC endpoint (Infura, Alchemy, etc.)
    - For historical price queries, an archive node is recommended
    - Free tier RPCs may not support historical state queries
+   - ⚠️ **Do not commit your actual RPC URL/API key to version control**
 
 2. **Owner Address**: Your wallet address (0x format)
+   - ⚠️ **Consider whether you want to commit your wallet address**
 
-3. **Addresses**: Pre-configured for Uniswap V3 mainnet contracts
+3. **Addresses**: Pre-configured for Uniswap V3 mainnet contracts (no changes needed)
+
+### Security Note
+
+The repository's `config.json` contains placeholders. Always use your own `config.json` with actual credentials locally and never commit sensitive information like API keys to the repository.
 
 ## Usage
 
