@@ -22,11 +22,13 @@ class UniswapV3Query:
         # Load sensitive data from environment variables
         rpc_url = os.getenv('RPC_URL')
         owner = os.getenv('OWNER_ADDRESS')
-        
+
         if not rpc_url:
-            raise ValueError("RPC_URL environment variable is required. Please set it in .env file")
+            raise ValueError(
+                "RPC_URL environment variable is required. Please set it in .env file")
         if not owner:
-            raise ValueError("OWNER_ADDRESS environment variable is required. Please set it in .env file")
+            raise ValueError(
+                "OWNER_ADDRESS environment variable is required. Please set it in .env file")
 
         self.w3 = Web3(Web3.HTTPProvider(rpc_url))
         self.owner = Web3.toChecksumAddress(owner)
