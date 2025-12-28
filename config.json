@@ -1,6 +1,4 @@
 {
-    "rpc_url": "YOUR_RPC_URL_HERE",
-    "owner": "YOUR_WALLET_ADDRESS_HERE",
     "addresses": {
         "nfpm": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
         "factory": "0x1F98431c8aD98523631AE4a59f267346ea31F984"

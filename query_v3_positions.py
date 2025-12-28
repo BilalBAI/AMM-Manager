@@ -3,6 +3,11 @@ from datetime import datetime
 import csv
 import json
 import math
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class UniswapV3Query:
@@ -14,8 +19,17 @@ class UniswapV3Query:
         with open(config_path) as f:
             self.config = json.load(f)
 
-        self.w3 = Web3(Web3.HTTPProvider(self.config['rpc_url']))
-        self.owner = Web3.toChecksumAddress(self.config['owner'])
+        # Load sensitive data from environment variables
+        rpc_url = os.getenv('RPC_URL')
+        owner = os.getenv('OWNER_ADDRESS')
+        
+        if not rpc_url:
+            raise ValueError("RPC_URL environment variable is required. Please set it in .env file")
+        if not owner:
+            raise ValueError("OWNER_ADDRESS environment variable is required. Please set it in .env file")
+
+        self.w3 = Web3(Web3.HTTPProvider(rpc_url))
+        self.owner = Web3.toChecksumAddress(owner)
         self.nfpm = self.w3.eth.contract(
             Web3.toChecksumAddress(self.config['addresses']['nfpm']),
             abi=self.config['abis']['nfpm']
