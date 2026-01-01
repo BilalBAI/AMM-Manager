@@ -26,3 +26,10 @@ Thumbs.db
 # Environment variables - never commit sensitive data
 .env
 
+# Logs and temporary files
+dashboard.log
+*.log
+
+# Jupyter notebooks (optional - uncomment if you don't want to commit them)
+# *.ipynb
+

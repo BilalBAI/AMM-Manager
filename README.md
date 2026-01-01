@@ -14,8 +14,11 @@ A Python tool to query and track your Uniswap V3 liquidity positions, including 
 ## Requirements
 
 - Python 3.8+
-- `web3` library
-- `python-dotenv` library
+- `web3` - Ethereum blockchain interaction
+- `python-dotenv` - Environment variable management
+- `dash` - Interactive web dashboard framework
+- `plotly` - Charting library
+- `pandas` - Data manipulation
 
 ## Installation
 
@@ -23,10 +26,7 @@ A Python tool to query and track your Uniswap V3 liquidity positions, including 
 pip install -r requirements.txt
 ```
 
-Or install manually:
-```bash
-pip install web3 python-dotenv
-```
+This installs all dependencies including dashboard libraries.
 
 ## Configuration
 
@@ -69,6 +69,8 @@ OWNER_ADDRESS=0xYourWalletAddress
 
 ## Usage
 
+### Query Positions
+
 ```bash
 python query_v3_positions.py
 ```
@@ -80,6 +82,24 @@ The script will:
 4. Retrieve deposit history with historical prices
 5. Display results in formatted tables
 6. Save data to `positions.csv` and `deposits.csv`
+
+### Position Simulator Dashboard
+
+Visualize how your position values change with price movements:
+
+```bash
+python simulator_dashboard.py
+```
+
+Then open http://127.0.0.1:8050 in your browser.
+
+**Features:**
+- Interactive charts showing Position Value and Fees Value at different prices
+- Visual indicators for your price range boundaries
+- Current price marker
+- Select any position from dropdown to view its simulation
+
+**Note:** Run `query_v3_positions.py` first to generate `positions.csv` data.
 
 ## Output Files
 
@@ -162,10 +182,14 @@ This ensures you have:
 
 ```
 AMM-Manager/
-├── query_v3_positions.py  # Main script
-├── config.json            # Configuration (RPC, addresses, ABIs)
+├── query_v3_positions.py  # Main query script
+├── simulator_dashboard.py # Interactive position simulator dashboard
+├── config.json            # Configuration (contract addresses, ABIs)
+├── .env                   # Your credentials (gitignored, create from .env.example)
+├── .env.example           # Environment variables template
 ├── positions.csv          # Position snapshots (auto-generated)
 ├── deposits.csv           # Deposit history (auto-generated)
+├── requirements.txt       # Python dependencies
 └── README.md              # This file
 ```
 

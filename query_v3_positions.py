@@ -232,6 +232,46 @@ class UniswapV3Query:
             pass
         return deposits
 
+    def _calculate_impermanent_loss(self, deposits, current_price, current_position_value, current_amount0=None, current_amount1=None):
+        """Calculate impermanent loss using Approach 1:
+        IL = (Current Position Value - Hold Value) / Hold Value × 100%
+        where Hold Value = Σ(initial_amount0) × current_price + Σ(initial_amount1)
+
+        Args:
+            deposits: List of tuples (amount0, amount1, block, tx, price, timestamp)
+            current_price: Current pool price (in token1 per token0)
+            current_position_value: Current value of position in token1 terms (may be None)
+            current_amount0: Current amount of token0 (for recalculating value if needed)
+            current_amount1: Current amount of token1 (for recalculating value if needed)
+
+        Returns:
+            IL percentage as float, or None if calculation not possible
+        """
+        if not deposits or current_price is None:
+            return None
+
+        # Recalculate current position value if not provided or if None
+        if current_position_value is None:
+            if current_amount0 is not None and current_amount1 is not None:
+                current_position_value = current_amount0 * current_price + current_amount1
+            else:
+                return None
+
+        # Sum all initial deposits
+        total_initial_amount0 = sum(dep[0] for dep in deposits)
+        total_initial_amount1 = sum(dep[1] for dep in deposits)
+
+        # Calculate Hold Value: what the initial tokens would be worth if just held
+        hold_value = total_initial_amount0 * current_price + total_initial_amount1
+
+        if hold_value == 0:
+            return None
+
+        # Calculate IL
+        il = ((current_position_value - hold_value) / hold_value) * 100
+
+        return il
+
     def query_positions(self):
         """Query all positions and return data for tables"""
         token_ids = [self.nfpm.functions.tokenOfOwnerByIndex(self.owner, i).call()
@@ -253,7 +293,7 @@ class UniswapV3Query:
             pool_addr = self._get_pool_address(t0, t1, fee)
             if not pool_addr or pool_addr == "0x" + "0" * 40:
                 positions_data.append(
-                    [tid, f"{sym0}/{sym1}", f"{fee/10000}%", "Pool not found"] + ["N/A"] * 9 + [query_time])
+                    [tid, f"{sym0}/{sym1}", f"{fee/10000}%", "Pool not found"] + ["N/A"] * 11 + [query_time])
                 continue
 
             pool = self.w3.eth.contract(
@@ -268,7 +308,8 @@ class UniswapV3Query:
 
             a0, a1 = self._get_amounts_from_liquidity(
                 L, sqrt_price_x96, current_tick, tickL, tickU, dec0, dec1)
-            value = a0 * price + a1 if a0 and a1 else None
+            # Calculate value even if one amount is 0 (out of range)
+            value = a0 * price + a1
 
             price_lower = self.tick_to_price(tickL, dec0, dec1)
             price_upper = self.tick_to_price(tickU, dec0, dec1)
@@ -291,19 +332,29 @@ class UniswapV3Query:
                 acc_fees_str = "N/A"
                 acc_fees_value_str = "N/A"
 
+            # Get all deposits for IL calculation
+            deposits = self._get_all_deposits(tid, dec0, dec1, pool_addr)
+
+            # Calculate Impermanent Loss
+            il = self._calculate_impermanent_loss(
+                deposits, price, value, a0, a1)
+            il_str = f"{il:.4f}%" if il is not None else "N/A"
+
             positions_data.append([
                 tid, f"{sym0}/{sym1}", f"{fee/10000}%", status,
+                f"{price:.6f} {sym1}/{sym0}",
                 f"{a0:.4f} {sym0}, {a1:.4f} {sym1}",
-                f"{value:.2f} {sym1}" if value else "N/A",
+                f"{value:.2f} {sym1}" if value is not None else "N/A",
                 f"{price_lower:.2f}-{price_upper:.2f}",
                 f"{tickL} to {tickU}",
                 uncollected_fees,
                 acc_fees_str,
                 acc_fees_value_str,
+                il_str,
                 query_time
             ])
 
-            for a0_dep, a1_dep, block, tx, dep_price, ts in self._get_all_deposits(tid, dec0, dec1, pool_addr):
+            for a0_dep, a1_dep, block, tx, dep_price, ts in deposits:
                 time_str = ts.strftime(
                     "%Y-%m-%d %H:%M:%S") if ts else f"Block {block}"
                 if dep_price:
@@ -423,9 +474,9 @@ if __name__ == "__main__":
     query = UniswapV3Query()
     pos_data, dep_data = query.query_positions()
 
-    pos_headers = ["TokenID", "Pair", "Fee", "Status", "Current Amounts",
-                   "Current Value", "Price Range", "Tick Range", "Uncollected Fees",
-                   "Accumulated Fees", "Fees Value", "Query Time"]
+    pos_headers = ["TokenID", "Pair", "Fee", "Status", "Current Price",
+                   "Current Amounts", "Current Value", "Price Range", "Tick Range",
+                   "Uncollected Fees", "Accumulated Fees", "Fees Value", "IL (%)", "Query Time"]
     dep_headers = ["TokenID", "Pair", "Date/Block", "Amount0", "Amount1",
                    "Price at Deposit", "Deposit Value", "Transaction"]
 
